@@ -11,10 +11,7 @@ namespace biediConverter
 		internal string makeString(bool comma)
 		{
 			string str = string.Concat("\t[\"", Type, "\",[", Position, ",", Azimut, "],", Init.ToString().ToLower(), "]");
-			if (comma)
-			{
-				str = str + ",";
-			}
+			if (comma) str += ",";
 			Console.WriteLine(str);
 			return str;
 		}

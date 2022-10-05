@@ -19,6 +19,7 @@ namespace biediConverter
 		const string prefix = "_obj = [";
 		const string postfix = "];";
 		const string loop = "{\n\t_this = (_x select 0) createVehicle ((_x select 1) select 0);\n\t_this setDir ((_x select 1) select 1);\n\t_this setPos ((_x select 1) select 0);\n\tif (_x select 2) then {_this setVectorUp [0,0,1];};\n} forEach _obj;";
+		static string marker = "";
 
 		private static string parseString(string str)
 		{
@@ -26,6 +27,16 @@ namespace biediConverter
 			str = str.Substring(pos + 1);
 			str = str.Trim('"', ';');
 			return str;
+		}
+
+		private static void parseVehicle(string str)
+		{
+
+		}
+
+		private static void parseMarker(string str)
+		{
+
 		}
 
 		static int Main(string[] args)
