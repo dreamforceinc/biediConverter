@@ -18,7 +18,7 @@ namespace biediConverter
 		static string appCompany = (attrCompany[0] as AssemblyCompanyAttribute).Company;
 		const string prefix = "_obj = [";
 		const string postfix = "];";
-		const string loop = "{\n\t_this = (_x select 0) createVehicle ((_x select 1) select 0);\n\t_this setDir ((_x select 1) select 1);\n\t_this setPos ((_x select 1) select 0);\n\tif (_x select 2) then {_this setVectorUp [0,0,1];};\n} forEach _obj;";
+		const string loop = "{\n\t_this = (_x select 0) createVehicle (_x select 1);\n\t_this setPos (_x select 1);\n\t_this setDir (_x select 2);\n\tif (_x select 3) then {_this setVectorUp [0,0,1];};\n} forEach _obj;";
 		static string marker = "";
 
 		private static string parseString(string str)
@@ -29,12 +29,36 @@ namespace biediConverter
 			return str;
 		}
 
-		private static void parseVehicle(string str)
+		private static void parseVehicle(StreamReader sr, string str, vehObject veh)
 		{
+			while (str != "};")
+			{
+				str = sr.ReadLine().Trim();
 
+				if (str.ToLower().StartsWith("position="))
+				{
+					veh.Position = parseString(str);
+					continue;
+				}
+				if (str.ToLower().StartsWith("type="))
+				{
+					veh.Type = parseString(str);
+					continue;
+				}
+				if (str.ToLower().StartsWith("azimut="))
+				{
+					veh.Azimut = parseString(str);
+					continue;
+				}
+				if (str.ToLower().StartsWith("init=\"_this setvectorup"))
+				{
+					veh.Init = true;
+					continue;
+				}
+			}
 		}
 
-		private static void parseMarker(string str)
+		private static void parseMarker(StreamReader sr, string str, markerObject mrk)
 		{
 
 		}
@@ -69,9 +93,13 @@ namespace biediConverter
 			}
 			string sqfFile = Path.Combine(path, filename + ".sqf");
 
-			//Console.WriteLine(appName + '\n');
-			List<vehObject> objects = new List<vehObject>();
+#if DEBUG
+			sqfFile = "C:\\Users\\W0LF\\Documents\\ArmA 2\\missions\\test.Chernarus\\out.sqf";
+#endif
+
+			List<vehObject> vehicles = new List<vehObject>();
 			string bufLine;
+			uint vehiclesCount = 0, markersCount = 0;
 
 			try
 			{
@@ -79,37 +107,16 @@ namespace biediConverter
 				{
 					while (!sr.EndOfStream)
 					{
-						bufLine = sr.ReadLine();
-						if (!bufLine.ToLower().StartsWith("class _vehicle_")) continue;
-
-						vehObject item = new vehObject();
-						while (bufLine != "\t};")
+						bufLine = sr.ReadLine().Trim().ToLower();
+						if (bufLine.StartsWith("objecttype=\"vehicle\";"))
 						{
-							//Console.WriteLine(bufLine);
-							bufLine = sr.ReadLine();
-
-							if (bufLine.Contains("POSITION="))
-							{
-								item.Position = parseString(bufLine);
-								continue;
-							}
-							if (bufLine.Contains("TYPE="))
-							{
-								item.Type = parseString(bufLine);
-								continue;
-							}
-							if (bufLine.Contains("AZIMUT="))
-							{
-								item.Azimut = parseString(bufLine);
-								continue;
-							}
-							if (bufLine.ToUpper().Contains("INIT="))
-							{
-								item.Init = true;
-								continue;
-							}
+							vehObject item = new vehObject();
+							vehiclesCount++;
+							parseVehicle(sr, bufLine, item);
+							vehicles.Add(item);
 						}
-						objects.Add(item);
+						else continue;
+
 					}
 				}
 			}
@@ -125,10 +132,10 @@ namespace biediConverter
 				using (StreamWriter sw = new StreamWriter(sqfFile))
 				{
 					sw.WriteLine(prefix);
-					for (int i = 0; i < objects.Count(); ++i)
+					for (int i = 0; i < vehicles.Count(); ++i)
 					{
-						var obj = objects[i];
-						sw.WriteLine(obj.makeString(i == objects.Count() - 1 ? false : true));
+						var obj = vehicles[i];
+						sw.WriteLine(obj.makeString(i == vehicles.Count() - 1 ? false : true));
 					}
 					sw.WriteLine(postfix);
 					sw.WriteLine(loop);
