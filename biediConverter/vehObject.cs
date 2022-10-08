@@ -12,7 +12,7 @@ namespace biediConverter
 		{
 			string str = string.Concat('\t', '[', Type, ',', Position, ',', Azimut, ',', Init.ToString().ToLower(), ']');
 			if (comma) str += ',';
-			Console.WriteLine(str);
+			Console.WriteLine(str.Trim());
 			return str;
 		}
 	}
