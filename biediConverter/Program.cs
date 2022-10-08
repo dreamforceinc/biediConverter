@@ -20,47 +20,42 @@ namespace biediConverter
 		const string postfix = "];";
 		const string loop = "{\n\t_this = (_x select 0) createVehicle (_x select 1);\n\t_this setPos (_x select 1);\n\t_this setDir (_x select 2);\n\tif (_x select 3) then {_this setVectorUp [0,0,1];};\n} forEach _obj;";
 		static string marker = "";
+		static uint vehiclesCount = 0, markersCount = 0;
 
-		private static string parseString(string str)
-		{
-			int pos = str.IndexOf('=');
-			str = str.Substring(pos + 1);
-			str = str.Trim('"', ';');
-			return str;
-		}
 
-		private static void parseVehicle(StreamReader sr, string str, vehObject veh)
+		static string parseString(string str) => str.Substring(str.IndexOf('=') + 1);
+
+		static void parseVehicle(StreamReader sr, string str, vehObject veh)
 		{
+			string buf;
 			while (str != "};")
 			{
-				str = sr.ReadLine().Trim();
-
-				if (str.ToLower().StartsWith("position="))
+				str = sr.ReadLine();
+				buf = str.Trim().ToLower();
+				if (buf.StartsWith("position="))
 				{
-					veh.Position = parseString(str);
-					continue;
+					veh.Position = str.Substring(str.IndexOf('=') + 1).Trim('"', ';');
+					//veh.Position = veh.Position.Trim('"', ';');
 				}
-				if (str.ToLower().StartsWith("type="))
+				if (buf.StartsWith("type="))
 				{
-					veh.Type = parseString(str);
-					continue;
+					veh.Type = str.Substring(str.IndexOf('=') + 1).Trim(';');
+					//veh.Type = veh.Type.Trim(';');
 				}
-				if (str.ToLower().StartsWith("azimut="))
+				if (buf.StartsWith("azimut="))
 				{
-					veh.Azimut = parseString(str);
-					continue;
+					veh.Azimut = str.Substring(str.IndexOf('=') + 1).Trim('"', ';');
+					//veh.Azimut = veh.Azimut.Trim('"', ';');
 				}
-				if (str.ToLower().StartsWith("init=\"_this setvectorup"))
+				if (buf.StartsWith("init=\"_this setvectorup"))
 				{
 					veh.Init = true;
-					continue;
 				}
 			}
 		}
 
-		private static void parseMarker(StreamReader sr, string str, markerObject mrk)
+		static void parseMarker(StreamReader sr, string str, markerObject mrk)
 		{
-
 		}
 
 		static int Main(string[] args)
@@ -92,14 +87,11 @@ namespace biediConverter
 				return 3;
 			}
 			string sqfFile = Path.Combine(path, filename + ".sqf");
-
 #if DEBUG
 			sqfFile = "C:\\Users\\W0LF\\Documents\\ArmA 2\\missions\\test.Chernarus\\out.sqf";
 #endif
-
 			List<vehObject> vehicles = new List<vehObject>();
 			string bufLine;
-			uint vehiclesCount = 0, markersCount = 0;
 
 			try
 			{
@@ -115,8 +107,6 @@ namespace biediConverter
 							parseVehicle(sr, bufLine, item);
 							vehicles.Add(item);
 						}
-						else continue;
-
 					}
 				}
 			}
@@ -125,28 +115,37 @@ namespace biediConverter
 				Console.WriteLine(e.Message);
 			}
 
-
-
-			try
+			if (vehiclesCount > 0 || markersCount > 0)
 			{
-				using (StreamWriter sw = new StreamWriter(sqfFile))
+				try
 				{
-					sw.WriteLine(prefix);
-					for (int i = 0; i < vehicles.Count(); ++i)
+					using (StreamWriter sw = new StreamWriter(sqfFile))
 					{
-						var obj = vehicles[i];
-						sw.WriteLine(obj.makeString(i == vehicles.Count() - 1 ? false : true));
+						sw.WriteLine(prefix);
+						for (int i = 0; i < vehicles.Count(); ++i)
+						{
+							var obj = vehicles[i];
+							sw.WriteLine(obj.makeString(i == vehicles.Count() - 1 ? false : true));
+						}
+						sw.WriteLine(postfix);
+						sw.WriteLine(loop);
 					}
-					sw.WriteLine(postfix);
-					sw.WriteLine(loop);
+					Console.WriteLine("\nDone.");
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.Message);
 				}
 			}
-			catch (Exception e)
+			else if (vehiclesCount == 0)
 			{
-				Console.WriteLine(e.Message);
+				Console.WriteLine("\nNo vehicles found.");
+			}
+			else if (markersCount == 0)
+			{
+				Console.WriteLine("\nNo markers found.");
 			}
 
-			Console.WriteLine("Done.");
 			Console.WriteLine("Press any key to quit.");
 			Console.ReadKey();
 			return 0;
