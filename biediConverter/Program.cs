@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Windows.Forms;
 
 namespace biediConverter
 {
@@ -53,31 +54,43 @@ namespace biediConverter
 			}
 		}
 
+		[STAThread]
 		static int Main(string[] args)
 		{
 			Console.WriteLine($"{appName} v{appVer} ({appFullVer})\n{appCopyright} by {appCompany}");
 
-			if (args.Count() != 1)
+			string sourcePath, outputPath;
+
+			if (args.Count() == 1) sourcePath = args[0];
+			else
 			{
-				Console.WriteLine($"\nusage: {appName}.exe \"path\\to\\file.biedi\"");
-				return 1;
+				using (OpenFileDialog openFileDialog = new OpenFileDialog())
+				{
+					openFileDialog.Title = "Open biedi file...";
+					openFileDialog.DefaultExt = ".biedi";
+					openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+					openFileDialog.RestoreDirectory = true;
+					openFileDialog.Filter = "Arma 2 editor's files (*.biedi)|*.biedi|All files (*.*)|*.*";
+					openFileDialog.FilterIndex = 1;
+					if (openFileDialog.ShowDialog() == DialogResult.Cancel) return 1;
+					sourcePath = openFileDialog.FileName;
+				}
 			}
 
-			string sourcePath = args[0];
 			if (!File.Exists(sourcePath))
 			{
 				Console.WriteLine($"\nERROR: file '{sourcePath}' does not exist!");
 				return 2;
 			}
 
-			string fileext = Path.GetExtension(sourcePath);
-			if (fileext.ToLower() != ".biedi")
+			if (Path.GetExtension(sourcePath).ToLower() != ".biedi")
 			{
 				Console.WriteLine($"\nERROR: file '{sourcePath}' is not .biedi file!");
 				return 3;
 			}
 
-			string sqfFile = Path.Combine(Path.GetDirectoryName(sourcePath), "output.sqf");
+			outputPath = Path.Combine(Path.GetDirectoryName(sourcePath), "output.sqf");
+
 
 			List<vehObject> vehicles = new List<vehObject>();
 			List<markerObject> markers = new List<markerObject>();
@@ -114,7 +127,7 @@ namespace biediConverter
 			{
 				try
 				{
-					using (StreamWriter sw = new StreamWriter(sqfFile))
+					using (StreamWriter sw = new StreamWriter(outputPath))
 					{
 						sw.WriteLine($"// Created by {appName} v{appVer} ({appFullVer})\n// {appCopyright} by {appCompany}");
 						if (vehicles.Count > 0)
