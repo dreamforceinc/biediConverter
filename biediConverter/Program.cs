@@ -59,21 +59,21 @@ namespace biediConverter
 
 			if (args.Count() != 1)
 			{
-				Console.WriteLine($"usage: {appName}.exe \"path\\to\\file.biedi\"");
+				Console.WriteLine($"\nusage: {appName}.exe \"path\\to\\file.biedi\"");
 				return 1;
 			}
 
 			string sourcePath = args[0];
 			if (!File.Exists(sourcePath))
 			{
-				Console.WriteLine($"ERROR: file '{sourcePath}' does not exist!");
+				Console.WriteLine($"\nERROR: file '{sourcePath}' does not exist!");
 				return 2;
 			}
 
 			string fileext = Path.GetExtension(sourcePath);
 			if (fileext.ToLower() != ".biedi")
 			{
-				Console.WriteLine($"ERROR: file '{sourcePath}' is not .biedi file!");
+				Console.WriteLine($"\nERROR: file '{sourcePath}' is not .biedi file!");
 				return 3;
 			}
 
